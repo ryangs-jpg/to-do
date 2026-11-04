@@ -1,0 +1,1 @@
+.auth-screen{min-height:100vh;display:grid;place-items:center;background:#f4f6ff}.auth-panel{max-width:420px;width:100%;padding:32px;background:white;border-radius:16px}.auth-panel input{width:100%}.auth-submit{width:100%}.auth-options{display:flex;gap:8px}.auth-notice.is-error{color:#b22}.logout-button{font-size:12px}
