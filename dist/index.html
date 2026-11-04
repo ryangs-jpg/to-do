@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#4565db"><meta name="description" content="지금 할 일 하나에 집중하는 가벼운 할 일 앱"><title>한걸음 — 하나씩, 가볍게</title><link rel="stylesheet" href="style.css"></head>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#4565db"><meta name="description" content="지금 할 일 하나에 집중하는 가벼운 할 일 앱"><title>한걸음 — 하나씩, 가볍게</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="auth.css"></head>
 <body>
 <section id="auth-screen" class="auth-screen">
   <div class="auth-panel">
@@ -7,6 +7,8 @@
     <div class="eyebrow">A LITTLE PROGRESS, EVERY DAY</div>
     <h1 id="auth-title">로그인 확인 중</h1>
     <p id="auth-description">안전하게 계정을 확인하고 있어요.</p>
+    <button id="google-login" type="button" class="google-login" disabled><span class="google-mark" aria-hidden="true">G</span> Google 계정으로 계속하기</button>
+    <div id="auth-divider" class="auth-divider">또는 이메일로</div>
     <form id="auth-form">
       <label id="auth-email-field">이메일<input id="auth-email" type="email" autocomplete="email" placeholder="example@email.com" maxlength="254" required></label>
       <label id="auth-password-field">비밀번호<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="8자 이상 입력" required></label>
