@@ -11,6 +11,7 @@
   const emailInput = $('#auth-email');
   const passwordInput = $('#auth-password');
   const logout = $('#logout-btn');
+  const googleButton = $('#google-login');
   const returnPath = window.location.pathname + window.location.search;
   let mode = 'login';
   let loading = false;
@@ -43,6 +44,8 @@
     $('#auth-title').textContent = item[0];
     $('#auth-description').textContent = item[1];
     submit.textContent = item[2];
+    googleButton.hidden = mode === 'recovery';
+    $('#auth-divider').hidden = mode === 'recovery' || mode === 'forgot';
     emailField.hidden = mode === 'recovery';
     passwordField.hidden = mode === 'forgot';
     passwordInput.autocomplete = mode === 'signup' || mode === 'recovery' ? 'new-password' : 'current-password';
@@ -103,6 +106,7 @@
   if (!window.supabase || typeof window.supabase.createClient !== 'function') {
     showAuth('login', '로그인 프로그램을 불러올 수 없어요. 인터넷 연결을 확인하고 새로고침해 주세요.', true);
     submit.disabled = true;
+    googleButton.disabled = true;
     return;
   }
 
@@ -111,6 +115,27 @@
     'sb_publishable_rNStYvHkIbQMhT3MSUv8XA_-oQsF7_F',
     { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'one-step-auth-v1' } }
   );
+
+  googleButton.disabled = false;
+  googleButton.addEventListener('click', async () => {
+    if (loading) return;
+    loading = true;
+    googleButton.disabled = true;
+    message('');
+    try {
+      const { error } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname + '#/app'
+        }
+      });
+      if (error) throw error;
+    } catch {
+      message('Google 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.', true);
+      loading = false;
+      googleButton.disabled = false;
+    }
+  });
 
   client.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') {
@@ -214,6 +239,16 @@
 
   (async () => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('error') || params.has('error_code')) {
+        const errorCode = params.get('error_code') || params.get('error');
+        const safePath = window.location.pathname + '#/login';
+        window.history.replaceState(null, '', safePath);
+        showAuth('login', errorCode === 'access_denied'
+          ? 'Google 로그인이 취소되었어요. 다시 시도해 주세요.'
+          : 'Google 로그인을 완료하지 못했어요. Supabase의 Google 제공자 및 리디렉션 설정을 확인해 주세요.', true);
+        return;
+      }
       const { data, error } = await client.auth.getUser();
       if (recovery) return;
       if (data && data.user && !error) {
