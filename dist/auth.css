@@ -1,4 +1,4 @@
-.auth-screen{min-height:100vh;display:grid;place-items:center;background:#f4f6ff}.auth-panel{max-width:420px;width:100%;padding:32px;background:white;border-radius:16px}.auth-panel input{width:100%}.auth-submit{width:100%}.auth-options{display:flex;gap:8px}.auth-notice.is-error{color:#b22}.logout-button{font-size:12px}
+.auth-screen{min-height:100vh;display:grid;place-items:center;background:#f4f6ff}.auth-panel{max-width:420px;width:100%;padding:32px;background:white;border-radius:16px}.auth-notice.is-error{color:#b22}.logout-button{font-size:12px}
 .auth-panel{border:1px solid #e6eaf5;box-shadow:0 16px 45px rgba(40,50,74,.08)}
 .auth-brand{font-size:24px;font-weight:800;display:flex;align-items:center;gap:7px;margin-bottom:26px}
 .auth-brand-icon{background:#4565db;color:white;border-radius:10px;padding:5px 9px}
@@ -8,12 +8,6 @@
 .google-login:hover{background:#f5f7fd;border-color:#b2c1e4}
 .google-login:disabled{opacity:.5;cursor:wait}
 .google-mark{font-size:20px;font-weight:800;font-family:Arial,sans-serif;color:#4285f4}
-.auth-divider{font-size:11px;color:#8b95aa;text-align:center;margin:12px auto}
-.auth-panel label{display:block;margin:14px 0}
-.auth-panel label input{display:block;margin-top:7px}
-.auth-submit{margin-top:15px;padding:12px}
-.auth-options{justify-content:center;flex-wrap:wrap;margin-top:12px}
-.auth-options button{font-size:11px;padding:8px;border:0;background:transparent;color:#5670bb}
 .auth-panel .auth-footnote{font-size:11px;margin-top:21px}
 .auth-notice{font-size:12px;line-height:1.6;margin:12px 0;padding:10px;background:#edf1ff;border-radius:8px}
 .auth-notice.is-error{background:#fff1ef;color:#b22}
