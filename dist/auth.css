@@ -18,3 +18,8 @@
 .auth-notice{font-size:12px;line-height:1.6;margin:12px 0;padding:10px;background:#edf1ff;border-radius:8px}
 .auth-notice.is-error{background:#fff1ef;color:#b22}
 @media(max-width:700px){.auth-screen{padding:18px}.auth-panel{padding:26px 21px}}
+/* Keep logout visible in the primary header on every screen size. */
+.header-actions{display:flex;align-items:center;gap:12px;min-width:0}
+.header-actions .logout-button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-height:34px;padding:7px 13px;border:1px solid #d7dfef;background:#fff;color:#465578;border-radius:9px;font-size:12px;font-weight:600}
+.header-actions .logout-button:hover{background:#edf2ff;border-color:#becbf0}
+@media(max-width:700px){.header-actions{gap:6px}.header-actions .header-note{display:none}.header-actions .logout-button{font-size:11px;padding:7px 10px}}
