@@ -22,3 +22,39 @@ Node.js가 설치된 환경에서 프로젝트 폴더에서 `node server.cjs`를
 ## 확인한 항목
 
 JavaScript 구문 검사 및 브라우저에서 할 일 추가, 작업 시작과 전환, 자동 보류, 메모·하위 단계 저장, 새로고침 후 복원, 완료와 실행 취소를 확인했습니다.
+
+## Supabase 로그인 설정
+
+한걸음은 Supabase Auth의 **이메일·비밀번호 회원가입/로그인/로그아웃**을 사용합니다. 앱에서 별도의 이메일 알림이나 매직링크를 발송하는 기능은 없습니다.
+
+1. [Supabase](https://supabase.com/dashboard)에서 프로젝트를 만들고 **Authentication → Providers → Email**에서 이메일 로그인 사용 여부를 확인하세요.
+2. 프로젝트 화면에서 **Project URL**과 **Publishable key**(또는 기존 공개 `anon` 키)를 확인하세요.
+3. Supabase **Authentication → URL Configuration**에서 배포 주소를 Site URL로 지정하고, 필요한 리디렉션 주소를 등록하세요. 이메일 확인을 사용하는 경우 특히 중요합니다.
+4. `dist/supabase-config.js`에 다음과 같이 입력하세요.
+
+   ```js
+   window.ONE_STEP_SUPABASE = {
+     url: 'https://YOUR_PROJECT.supabase.co',
+     publishableKey: 'sb_publishable_YOUR_PUBLIC_KEY',
+   };
+   ```
+
+5. `node server.cjs`로 실행해 회원가입, 로그인, 새로고침 후 세션 복원, 로그아웃을 확인하세요. Vercel은 기존 `vercel.json`의 `outputDirectory: "dist"`를 그대로 사용합니다.
+
+**중요:** 설정값이 비어 있으면 앱은 로그인 화면에서 멈추며 기존 할 일에 접근하지 않습니다. 배포 전에 Supabase 프로젝트 연결을 완료하세요. 정적 사이트에 포함된 `supabase-config.js`는 누구나 읽을 수 있습니다. **비밀 키(`sb_secret_…`, `service_role`)와 데이터베이스 비밀번호는 절대 넣지 마세요.** 이 앱에는 Supabase 데이터베이스 테이블을 추가하지 않습니다. Supabase는 로그인 확인에만 쓰이며, 할 일은 서버와 동기화되지 않습니다. Supabase에서 이메일 확인이 활성화되어 있으면 회원가입 후 계정 확인 절차가 필요할 수 있습니다. 그 메일은 Supabase Auth의 기본 인증 절차이지 앱의 별도 이메일 기능이 아닙니다.
+
+로그인 후 할 일은 기존과 같이 **브라우저 localStorage**에 저장하되, 계정별로 `one-step-v1:<Supabase 사용자 ID>` 키를 사용합니다. 계정 A의 기록이 계정 B의 앱 화면에 자동 표시되지 않도록 분리합니다. 최초 로그인 때 예전 공용 키(`one-step-v1`)에 기록이 있으면 명시적으로 **이 계정으로 이동**하거나 **기록을 유지하고 새로 시작**할 수 있습니다. 이동을 선택할 때에만 기존 공용 키가 삭제됩니다. 이전 기록을 옮기기 전에는 JSON 백업을 권장합니다. 브라우저 개발자 도구를 사용할 수 있는 공유 PC에서 localStorage 자체는 암호화/서버 권한 보호가 되지 않으므로 민감정보 저장용으로 적합하지 않습니다.
+
+## 반복 일정 및 회귀 테스트
+
+매일·매주 반복 작업의 다음 마감일은 원래 마감일을 기준으로 정해진 주기를 지키면서 **완료일보다 뒤에 오는 첫 발생일**로 계산합니다. 기존 방식으로 계산한 다음 날짜가 이미 미래라면 그 날짜를 유지합니다. 기존 작업의 완료 기록, 새 작업 생성, 완료/실행 취소 동작은 그대로 유지합니다.
+
+Node.js 20 이상에서 별도 의존성 설치 없이 실행할 수 있습니다.
+
+```sh
+node --check dist/app.js
+node --check dist/auth.js
+node --test test/*.test.cjs
+```
+
+테스트는 실제 `dist/app.js`의 완료 함수를 실행하여 매일/매주, 지연 완료, 월말·윤년·연말, 완료 취소 및 실행 취소를 확인합니다. 로그인 테스트는 Supabase 응답을 모의로 만들어 로그인·회원가입·로그아웃과 기존 로컬 기록 이동을 확인합니다. **실제 Supabase 프로젝트와 실제 브라우저를 이용한 종단 간 인증 검증은 프로젝트 설정 후 별도로 진행해야 합니다.**

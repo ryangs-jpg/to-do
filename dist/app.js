@@ -1,5 +1,7 @@
 'use strict';
-const $=s=>document.querySelector(s), KEY='one-step-v1', DRAFT='one-step-draft';
+const userId=window.__oneStepAuthUserId;
+if(typeof userId!=='string'||!userId)throw Error('Supabase login required');
+const $=s=>document.querySelector(s), KEY=`one-step-v1:${userId}`, DRAFT=`one-step-draft:${userId}`;
 const dateKey=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -11,7 +13,21 @@ function newTask(title){return{id:uid(),title,status:'todo',today:false,note:'',
 function active(){return state.tasks.find(t=>t.status==='active')}
 function update(t){t.updated=Date.now();save()}
 function start(t){const old=active();if(old&&old.id!==t.id){old.status='paused';old.updated=Date.now();toast('하던 일은 보류했어요. 메모와 진행 상태는 그대로예요.')}t.status='active';if(!t.today&&state.tasks.filter(x=>x.today&&x.status!=='done').length<3)t.today=true;update(t);timer={task:t.id,end:0,left:300};render()}
-function complete(t){const before=JSON.stringify(state.tasks);if(t.status==='done'){t.status='todo';t.completed=''}else{t.status='done';t.completed=dateKey();if(t.repeat!=='none'){const next={...t,id:uid(),status:'todo',today:false,completed:'',notified:'',steps:t.steps.map(s=>({...s,id:uid(),done:false})),created:Date.now()};const d=new Date(`${t.due||dateKey()}T12:00:00`);d.setDate(d.getDate()+(t.repeat==='weekly'?7:1));next.due=dateKey(d);next.start=next.due;next.reminder='';state.tasks.push(next)}}update(t);render();toast(t.status==='done'?'한 걸음 마쳤어요. 수고했어요.':'다시 할 일에 담았어요.',()=>{state.tasks=JSON.parse(before);save();render()})}
+// Preserve the cadence anchored to the original due date, skipping missed cycles.
+function nextRepeatDue(due,repeat,completed=dateKey()){
+  const interval=repeat==='weekly'?7:1;
+  const next=new Date(`${due||completed}T12:00:00`);
+  next.setDate(next.getDate()+interval);
+  const finish=new Date(`${completed}T12:00:00`);
+  if(next<=finish){
+    // UTC calendar-day arithmetic avoids DST shortening/lengthening a day.
+    const utcDay=d=>Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());
+    const missed=Math.floor((utcDay(finish)-utcDay(next))/86400000/interval)+1;
+    next.setDate(next.getDate()+missed*interval);
+  }
+  return dateKey(next);
+}
+function complete(t){const before=JSON.stringify(state.tasks);if(t.status==='done'){t.status='todo';t.completed=''}else{t.status='done';t.completed=dateKey();if(t.repeat!=='none'){const next={...t,id:uid(),status:'todo',today:false,completed:'',notified:'',steps:t.steps.map(s=>({...s,id:uid(),done:false})),created:Date.now()};next.due=nextRepeatDue(t.due,t.repeat,t.completed);next.start=next.due;next.reminder='';state.tasks.push(next)}}update(t);render();toast(t.status==='done'?'한 걸음 마쳤어요. 수고했어요.':'다시 할 일에 담았어요.',()=>{state.tasks=JSON.parse(before);save();render()})}
 function toggleToday(t){if(!t.today&&state.tasks.filter(x=>x.today&&x.status!=='done').length>=3){toast('오늘은 세 개까지만. 먼저 하나를 빼거나 마쳐보세요.');return}t.today=!t.today;update(t);render()}
 function row(t){const meta=[t.status==='active'?'진행 중':t.status==='paused'?'잠시 보류':t.status==='waiting'?'답변 대기':'',t.next,t.due?`마감 ${t.due.slice(5).replace('-','. ')}`:'',t.priority===2?'우선순위 높음':'',t.tag].filter(Boolean).join(' · ');return`<div class="task-row"><button class="check ${t.status==='done'?'done':''}" data-action="done" data-id="${esc(t.id)}" aria-label="${esc(t.title)} ${t.status==='done'?'완료 취소':'완료'}">${t.status==='done'?'✓':''}</button><button class="task-info" data-action="edit" data-id="${esc(t.id)}"><span class="task-title ${t.status==='done'?'done-title':''}">${esc(t.title)}</span>${meta?`<span class="task-meta">${esc(meta)}</span>`:''}</button>${picker&&t.status!=='done'?`<button class="task-start" data-action="today" data-id="${esc(t.id)}">${t.today?'오늘에서 빼기':'오늘에 담기'}</button>`:t.status!=='done'&&t.status!=='active'?`<button class="task-start" data-action="start" data-id="${esc(t.id)}">시작 →</button>`:''}<button class="row-more" data-action="edit" data-id="${esc(t.id)}" aria-label="${esc(t.title)} 상세 옵션">⋯</button></div>`}
 function render(){const today=dateKey();$('#date-label').textContent=new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',weekday:'long'}).format(new Date());$('#all-count').textContent=state.tasks.filter(t=>t.status!=='done').length;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#home-view').hidden=view!=='home';$('#list-view').hidden=view==='home';const titles={home:['오늘은 하나씩 해볼까요?','생각은 가볍게 내려놓고, 눈앞의 한 가지부터.'],all:[picker?'오늘의 작은 계획 고르기':'전체 할 일',picker?'지금 챙길 일 세 개만 골라보세요.':'필요할 때 하나씩 꺼내보세요.'],inbox:['생각을 내려놓는 수집함','지금 정리하지 않아도 괜찮아요.'],waiting:['잠시 멈춰둔 일','준비가 되면, 여기서 이어가세요.'],done:['차곡차곡, 해낸 일','작은 걸음들이 모여 있어요.']};$('#heading').textContent=titles[view][0];$('#subtitle').textContent=titles[view][1];
