@@ -1,0 +1,7 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const G=require('../dist/garden.js');
+test('unique completions progress from seed to fruit and do not count the same task twice',()=>{const garden=G.normalize();assert.equal(G.status(garden).index,0);const expected=[1,1,2,2,3,3,3,4];for(let i=0;i<8;i++){assert.equal(G.award(garden,'task-'+i),true);assert.equal(G.status(garden).index,expected[i]);assert.equal(G.award(garden,'task-'+i),false);assert.equal(G.status(garden).count,i+1)}G.award(garden,'task-8');assert.equal(G.status(garden).index,4);assert.equal(G.status(garden).count,9)});
+test('legacy completions and backup garden merge without duplicate credit',()=>{const garden=G.normalize({awarded:['a','a',null,4]},[{id:'a',status:'done'},{id:'b',status:'done'},{id:'c',status:'todo'}]);assert.deepEqual(garden.awarded,['a','b']);const restored=G.normalize(JSON.parse(JSON.stringify(garden)),[{id:'a',status:'todo'}]);assert.equal(G.status(restored).count,2);assert.equal(G.award(restored,'a'),false)});
+test('an explicit undo snapshot restores the previous growth stage',()=>{const garden=G.normalize(),snapshot=JSON.stringify(garden);G.award(garden,'new');assert.equal(G.status(garden).index,1);const undone=G.normalize(JSON.parse(snapshot));assert.equal(G.status(undone).index,0)});
+test('all five scenes carry their stage name and character',()=>{for(let stage=0;stage<5;stage++){const svg=G.scene(stage);assert.match(svg,/<svg/);assert.ok(svg.includes(G.stages[stage].name));assert.ok(svg.includes('귤이'))}});
